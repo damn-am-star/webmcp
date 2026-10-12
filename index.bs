@@ -662,6 +662,7 @@ The {{ModelContext}} interface provides methods for web applications to register
 [Exposed=Window, SecureContext]
 interface ModelContext : EventTarget {
   Promise<undefined> registerTool(ModelContextTool tool, optional ModelContextRegisterToolOptions options = {});
+  Promise<undefined> updateTool(DOMString name, optional object inputSchema);
   Promise<sequence<RegisteredTool>> getTools(optional ModelContextGetToolOptions options = {});
   Promise<DOMString> executeTool(RegisteredTool tool, optional object inputObject, optional ModelContextExecuteToolOptions options = {});
 
@@ -690,6 +691,14 @@ is a [=model context=] [=struct=] created alongside the {{ModelContext}}.
     descendants that are exposed to this document. This API is designed for so-called "in-page"
     agents written in JavaScript, and possibly living in <{iframe}>s. The [=user agent=]'s [=browser
     agent=] uses a different internal mechanism to retrieve the tools exposed to it.</p>
+  </dd>
+
+  <dt><code><var ignore>document</var>.{{Document/modelContext}}.{{ModelContext/updateTool(name, inputSchema)}}</code></dt>
+  <dd>
+    <p>Updates the input schema of a registered tool. Other tool properties, including its
+    {{ModelContextTool/execute}} callback, are unchanged. If <var ignore>inputSchema</var> is
+    omitted, the tool's input schema is removed. Returns a rejected promise if the tool is not
+    registered or if the input schema cannot be serialized to JSON.</p>
   </dd>
 
   <dt><code><var ignore>document</var>.{{Document/modelContext}}.{{ModelContext/executeTool(tool, inputObject, options)}}</code></dt>
@@ -850,6 +859,48 @@ The <dfn method for=ModelContext>registerTool(<var>tool</var>, <var>options</var
 
   1. [=Queue a global task=] on the [=webmcp task source=] given |global| to [=resolve=] |promise|
      with undefined.
+
+1. Return |promise|.
+
+</div>
+
+<div algorithm>
+The <dfn method for=ModelContext>updateTool(<var>name</var>, <var>inputSchema</var>)</dfn> method steps are:
+
+1. Let |global| be [=this=]'s [=relevant global object=].
+
+1. Let |tool owner| be |global|'s [=associated Document|associated <code>Document</code>=].
+
+1. If |tool owner| is not [=Document/fully active=], then return [=a promise rejected with=] an
+   "{{InvalidStateError}}" {{DOMException}}.
+
+1. If |tool owner| is not [=allowed to use=] the "{{tools}}" feature, then return [=a promise
+   rejected with=] a "{{NotAllowedError}}" {{DOMException}}.
+
+1. Let |tool map| be [=this=]'s [=ModelContext/internal context=]'s [=model context/tool map=].
+
+1. If |tool map|[|name|] does not [=map/exist=], then return [=a promise rejected with=] an
+   "{{InvalidStateError}}" {{DOMException}}.
+
+1. Let |stringified input schema| be the empty string.
+
+1. If |inputSchema| was given, set |stringified input schema| to the result of [=serializing a
+   JavaScript value to a JSON string=], given |inputSchema|. If this threw an exception, then return
+   [=a promise rejected with=] that exception.
+
+1. Let |tool definition| be |tool map|[|name|].
+
+1. Set |tool definition|'s [=tool definition/input schema=] to |stringified input schema|.
+
+1. Let |promise| be [=a new promise=] created in [=this=]'s [=relevant realm=].
+
+1. [=In parallel=]:
+
+   1. [=Notify documents of a tool change=] given |tool owner| and |tool definition|'s [=tool
+      definition/exposed origins=].
+
+   1. [=Queue a global task=] on the [=webmcp task source=] given |global| to [=resolve=] |promise|
+      with undefined.
 
 1. Return |promise|.
 
