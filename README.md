@@ -437,10 +437,10 @@ Designing tools for AI agents requires different considerations than building tr
 ### Keeping agent-facing parts of a tool definition updated
 
 - **A tool's implementation can by dynamic**: As long as a tool's name, description, and input schema remain accurate, its `execute` callback can delegate to another function that an application can change over time. The tool does not need to be re-registered merely because its implementation changes.
-- **Re-register changed agent-facing metadata**: A tool's name, description, and input schema are loaded into the model's context statically. To change them, unregister the tool and re-register it with update information for the model to consume. Unregistration and registration each produce a `toolchange` event; consumers that observe the event can refresh their tool list accordingly.
+- **Update changed agent-facing metadata**: A tool's name and description are loaded into the model's context statically; to change them, unregister and re-register the tool. Use `updateTool()` to change only a registered tool's input schema in place. Consumers that observe the resulting `toolchange` event can refresh their tool list.
 - **Validation at execution time**: A tool's input schema is consumed by the model when the tool was first observed, but application state can change before the tool is invoked. The tool's `execute` callback should still validate current inputs, authorization, and preconditions before running.
 
-WebMCP does not currently define an in-place `updateTool()` method, lazy schemas, or disabled and grouped tool states. See [issue #167](https://github.com/webmachinelearning/webmcp/issues/167) and [issue #255](https://github.com/webmachinelearning/webmcp/issues/255) for more discussion.
+WebMCP defines `updateTool()` for changing a registered tool's input schema in place. It does not currently define lazy schemas or disabled and grouped tool states. See [issue #167](https://github.com/webmachinelearning/webmcp/issues/167) and [issue #255](https://github.com/webmachinelearning/webmcp/issues/255) for more discussion.
 
 ### Clear Language and Semantic Naming
 
